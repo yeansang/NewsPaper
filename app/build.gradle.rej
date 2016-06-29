@@ -1,0 +1,10 @@
+diff a/app/build.gradle b/app/build.gradle	(rejected hunks)
+@@ -2,7 +2,7 @@
+ 
+ android {
+     compileSdkVersion 23
+-    buildToolsVersion "24.0.0"
++    buildToolsVersion "23.0.2"
+ 
+     defaultConfig {
+         applicationId "com.example.nemus.newspaper"

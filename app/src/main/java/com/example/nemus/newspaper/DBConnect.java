@@ -1,4 +1,4 @@
-package com.example.nemus.fakechat;
+package com.example.nemus.newspaper;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -15,7 +15,8 @@ public class DBConnect extends SQLiteOpenHelper{
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE CHAT( id INTEGER PRIMARY KEY AUTOINCREMENT, word TEXT, pos INTEGER);");
+        db.execSQL("CREATE TABLE FAV( id INTEGER PRIMARY KEY AUTOINCREMENT, webTitle TEXT, webUrl TEXT,pos INTEGER);");
+        db.execSQL("CREATE TABLE REC( id INTEGER PRIMARY KEY AUTOINCREMENT, webTitle TEXT, webUrl TEXT,pos INTEGER);");
     }
 
     @Override

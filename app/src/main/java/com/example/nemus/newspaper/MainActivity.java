@@ -11,17 +11,25 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -58,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
 
+        /*
       FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
       fab.setOnClickListener(new View.OnClickListener() {
           @Override
@@ -66,6 +75,7 @@ public class MainActivity extends AppCompatActivity {
                       .setAction("Action", null).show();
           }
       });
+      */
       
     }
 
@@ -178,8 +188,9 @@ public class MainActivity extends AppCompatActivity {
     public static class News extends Fragment {
 
         ListView screen = null;
-        //DBConnect dbConnect;
+        DBConnect dbConnect;
         ArrayAdapter<String> adapter;
+        //GetGuardianNews gd = new GetGuardianNews();
 
         public News() {
         }
@@ -198,17 +209,45 @@ public class MainActivity extends AppCompatActivity {
             View rootView = inflater.inflate(R.layout.fragment_news, container, false);
             screen = (ListView) rootView.findViewById(R.id.news_listView);
             ArrayList<String> saveWord = new ArrayList<String>();
-            saveWord.add("testtext");
-            saveWord.add("testtext");
-            saveWord.add("testtext");
-            saveWord.add("testtext");
-            saveWord.add("testtext");
-            saveWord.add("testtext");
-            saveWord.add("testtext");
-            saveWord.add("testtext");
-            saveWord.add("testtext");
+
+            JSONArray newsArray =null;
+            try {
+                 newsArray = new GetGuardianNews().execute().get();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if(newsArray!=null){
+                for(int i=0;i<newsArray.length();i++){
+                    try {
+                        saveWord.add(newsArray.getJSONObject(i).getString("webTitle"));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }else{
+                saveWord.add("Fail News read");
+            }
+
             adapter= new ArrayAdapter<String>(getActivity(), android.R.layout.simple_expandable_list_item_1,saveWord);
             screen.setAdapter(adapter);
+
+            final JSONArray urlCatch = newsArray;
+
+            screen.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    Toast toast = null;
+                    try {
+                        toast = Toast.makeText(getActivity(),urlCatch.getJSONObject(position).getString("webUrl"), Toast.LENGTH_LONG);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    toast.setGravity(Gravity.CENTER, 0, 0);
+                    toast.show();
+
+                }
+            });
+
             return rootView;
         }
     }
