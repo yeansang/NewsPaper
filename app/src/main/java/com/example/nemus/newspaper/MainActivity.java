@@ -1,13 +1,8 @@
 package com.example.nemus.newspaper;
 
-import android.app.Activity;
-import android.content.Intent;
-import android.net.Uri;
+
 import android.support.design.widget.TabLayout;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.Toolbar;
    
 import android.support.v4.app.Fragment;
@@ -15,25 +10,8 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -52,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private ViewPager mViewPager;
 
-    private static Fav fav;
+
 
 
 
@@ -73,10 +51,6 @@ public class MainActivity extends AppCompatActivity {
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
-
-        fav = new Fav();
-
-
 
         /*
       FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -133,11 +107,11 @@ public class MainActivity extends AppCompatActivity {
             // Return a PlaceholderFragment (defined as a static inner class below).
             switch (position){
                 case 0:
-                    return News.newInstance();
+                    return new News();
                 case 1:
-                    return fav;
+                    return new Fav();
                 case 2:
-                    return Rec.newInstance();
+                    return new Rec();
             }
             return null;
         }
@@ -162,273 +136,4 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public static class News extends Fragment {
-
-        ListView screen = null;
-
-        ArrayAdapter<String> adapter;
-        //GetGuardianNews gd = new GetGuardianNews();
-
-        public News() {
-        }
-
-        public static News newInstance() {
-            News fragment = new News();
-            return fragment;
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_news, container, false);
-            final DBConnect dbConnect = new DBConnect(getActivity(), "news.db",null,1);
-            screen = (ListView) rootView.findViewById(R.id.news_listView);
-            ArrayList<String> saveWord = new ArrayList<String>();
-
-            JSONArray newsArray =null;
-            try {
-                 newsArray = new GetGuardianNews().execute().get();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            if(newsArray!=null){
-                for(int i=0;i<newsArray.length();i++){
-                    try {
-                        saveWord.add(newsArray.getJSONObject(i).getString("webTitle"));
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }else{
-                saveWord.add("Fail News read");
-            }
-
-            adapter= new ArrayAdapter<String>(getActivity(), android.R.layout.simple_expandable_list_item_1,saveWord);
-            screen.setAdapter(adapter);
-
-            final JSONArray urlCatch = newsArray;
-
-            screen.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    Toast toast = null;
-                    try {
-                        //Intent i = new Intent(Intent.ACTION_VIEW);
-                        //Uri u = Uri.parse(urlCatch.getJSONObject(position).getString("webUrl"));
-                        //i.setData(u);
-                        //startActivity(i);
-                        toast = Toast.makeText(getActivity(),urlCatch.getJSONObject(position).getString("webUrl"), Toast.LENGTH_LONG);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                    toast.setGravity(Gravity.CENTER, 0, 0);
-                    toast.show();
-                    int lastNum = dbConnect.getLastPos(DBConnect.rec);
-                    try {
-                        dbConnect.input(DBConnect.rec, urlCatch.getJSONObject(position).getString("webTitle"),urlCatch.getJSONObject(position).getString("webUrl"),lastNum+1);
-                    }catch (JSONException e){
-                        e.printStackTrace();
-                    }
-
-                }
-            });
-
-            screen.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-                @Override
-                public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                    PopupMenu pop = new PopupMenu(parent.getContext(), view);
-                    pop.getMenuInflater().inflate(R.menu.fav_menu_pop,pop.getMenu());
-
-                    final int index = position;
-                    //팝업메뉴 리스너 설정
-                    pop.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                        @Override
-                        public boolean onMenuItemClick(MenuItem item) {
-                            if(item.getItemId() == R.id.favorite){
-                                int lastNum = dbConnect.getLastPos(DBConnect.fav);
-                                try {
-                                    dbConnect.input(DBConnect.fav, urlCatch.getJSONObject(index).getString("webTitle"), urlCatch.getJSONObject(index).getString("webUrl"), lastNum + 1);
-                                }catch (JSONException e){
-                                    e.printStackTrace();
-                                }
-                                fav.onDetach();
-
-                            }
-                            return false;
-                        }
-                    });
-                    pop.show();
-                    return false;
-                }
-            });
-
-            return rootView;
-        }
-    }
-
-    public static class Fav extends Fragment {
-
-        ListView screen = null;
-        static ArrayAdapter<String> adapter;
-
-        public Fav(){}
-
-        public static Fav newInstance(){
-            Fav fragment = new Fav();
-            return fragment;
-        }
-        /*
-        public static void refrash(Activity a){
-            DBConnect dbConnect = new DBConnect(a, "news.db",null,1);
-            JSONArray ja = dbConnect.getAll(DBConnect.fav);
-            adapter.add();
-            adapter.notifyDataSetChanged();
-        }
-        */
-        @Override
-        public View onCreateView(final LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_fav, container, false);
-            final DBConnect dbConnect = new DBConnect(getActivity(), "news.db",null,1);
-            screen = (ListView) rootView.findViewById(R.id.fav_listView);
-            ArrayList<String> saveWord = new ArrayList<String>();
-            final JSONArray ja = dbConnect.getAll(DBConnect.fav);
-
-            try{
-                for (int i = 0; i < ja.length(); i++) {
-                    try {
-                        saveWord.add(ja.getJSONObject(i).getString("webTitle"));
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-
-                }
-            }catch(NullPointerException e){
-                saveWord.add("No favorite article");
-            }
-
-            adapter= new ArrayAdapter<String>(getActivity(), android.R.layout.simple_expandable_list_item_1,saveWord);
-            screen.setAdapter(adapter);
-            screen.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    Intent i = new Intent(Intent.ACTION_VIEW);
-                    Uri u = null;
-                    try {
-                        u = Uri.parse(ja.getJSONObject(position).getString("webUrl"));
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                    i.setData(u);
-                    startActivity(i);
-                }
-            });
-
-            screen.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-                @Override
-                public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                    PopupMenu pop = new PopupMenu(parent.getContext(), view);
-                    pop.getMenuInflater().inflate(R.menu.del_menu_pop,pop.getMenu());
-
-                    final int index = position;
-                    //팝업메뉴 리스너 설정
-                    pop.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                        @Override
-                        public boolean onMenuItemClick(MenuItem item) {
-                            if(item.getItemId() == R.id.delete){
-                                String juda = adapter.getItem(index);
-                                adapter.remove(juda);
-                                dbConnect.remove(DBConnect.fav,index);
-                                adapter.notifyDataSetChanged();
-                            }
-                            return false;
-                        }
-                    });
-                    pop.show();
-                    return false;
-                }
-            });
-            return rootView;
-        }
-
-
-
-    }
-
-    public static class Rec extends Fragment {
-
-        ListView screen = null;
-        ArrayAdapter<String> adapter;
-
-        public Rec(){}
-
-        public static Rec newInstance(){
-            Rec fragment = new Rec();
-            return fragment;
-        }
-
-        @Override
-        public View onCreateView(final LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_rec, container, false);
-            final DBConnect dbConnect = new DBConnect(getActivity(), "news.db",null,1);
-            screen = (ListView) rootView.findViewById(R.id.rec_listView);
-            ArrayList<String> saveWord = new ArrayList<String>();
-            final JSONArray ja = dbConnect.getAll(DBConnect.rec);
-
-            try{
-                for (int i = 0; i < ja.length(); i++) {
-                    try {
-                        saveWord.add(ja.getJSONObject(i).getString("webTitle"));
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                    if (i > 10) break;
-                }
-            }catch(NullPointerException e){
-                saveWord.add("No recent article");
-            }
-            adapter= new ArrayAdapter<String>(getActivity(), android.R.layout.simple_expandable_list_item_1,saveWord);
-            screen.setAdapter(adapter);
-            screen.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    Intent i = new Intent(Intent.ACTION_VIEW);
-                    Uri u = null;
-                    try {
-                        u = Uri.parse(ja.getJSONObject(position).getString("webUrl"));
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                    i.setData(u);
-                    startActivity(i);
-                }
-            });
-            screen.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-                @Override
-                public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                    PopupMenu pop = new PopupMenu(parent.getContext(), view);
-                    pop.getMenuInflater().inflate(R.menu.del_menu_pop,pop.getMenu());
-
-                    final int index = position;
-                    //팝업메뉴 리스너 설정
-                    pop.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                        @Override
-                        public boolean onMenuItemClick(MenuItem item) {
-                            if(item.getItemId() == R.id.delete){
-                                String juda = adapter.getItem(index);
-                                adapter.remove(juda);
-                                dbConnect.remove(DBConnect.rec,index);
-                                adapter.notifyDataSetChanged();
-                            }
-                            return false;
-                        }
-                    });
-                    pop.show();
-                    return false;
-                }
-            });
-            return rootView;
-        }
-    }
 }

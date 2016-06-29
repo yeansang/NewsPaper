@@ -57,7 +57,7 @@ public class DBConnect extends SQLiteOpenHelper{
 
     public JSONArray getAll(String table){
         SQLiteDatabase db = getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT * FROM "+table,null);
+        Cursor cursor = db.rawQuery("SELECT * FROM "+table+" ORDER BY pos DESC",null);
         JSONArray out = new JSONArray();
 
         if(cursor.isAfterLast()){
