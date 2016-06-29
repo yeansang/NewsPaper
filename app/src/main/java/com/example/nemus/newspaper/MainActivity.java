@@ -1,5 +1,6 @@
 package com.example.nemus.newspaper;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.design.widget.TabLayout;
@@ -51,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
      */
     private ViewPager mViewPager;
 
+    private static Fav fav;
+
 
 
     @Override
@@ -70,6 +73,8 @@ public class MainActivity extends AppCompatActivity {
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
+
+        fav = new Fav();
 
 
 
@@ -130,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
                 case 0:
                     return News.newInstance();
                 case 1:
-                    return Fav.newInstance();
+                    return fav;
                 case 2:
                     return Rec.newInstance();
             }
@@ -208,10 +213,10 @@ public class MainActivity extends AppCompatActivity {
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     Toast toast = null;
                     try {
-                        Intent i = new Intent(Intent.ACTION_VIEW);
-                        Uri u = Uri.parse(urlCatch.getJSONObject(position).getString("webUrl"));
-                        i.setData(u);
-                        startActivity(i);
+                        //Intent i = new Intent(Intent.ACTION_VIEW);
+                        //Uri u = Uri.parse(urlCatch.getJSONObject(position).getString("webUrl"));
+                        //i.setData(u);
+                        //startActivity(i);
                         toast = Toast.makeText(getActivity(),urlCatch.getJSONObject(position).getString("webUrl"), Toast.LENGTH_LONG);
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -246,6 +251,8 @@ public class MainActivity extends AppCompatActivity {
                                 }catch (JSONException e){
                                     e.printStackTrace();
                                 }
+                                fav.onDetach();
+
                             }
                             return false;
                         }
@@ -262,8 +269,7 @@ public class MainActivity extends AppCompatActivity {
     public static class Fav extends Fragment {
 
         ListView screen = null;
-        DBConnect dbConnect;
-        ArrayAdapter<String> adapter;
+        static ArrayAdapter<String> adapter;
 
         public Fav(){}
 
@@ -271,7 +277,14 @@ public class MainActivity extends AppCompatActivity {
             Fav fragment = new Fav();
             return fragment;
         }
-
+        /*
+        public static void refrash(Activity a){
+            DBConnect dbConnect = new DBConnect(a, "news.db",null,1);
+            JSONArray ja = dbConnect.getAll(DBConnect.fav);
+            adapter.add();
+            adapter.notifyDataSetChanged();
+        }
+        */
         @Override
         public View onCreateView(final LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
@@ -288,11 +301,12 @@ public class MainActivity extends AppCompatActivity {
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
-                    if (i > 10) break;
+
                 }
             }catch(NullPointerException e){
                 saveWord.add("No favorite article");
             }
+
             adapter= new ArrayAdapter<String>(getActivity(), android.R.layout.simple_expandable_list_item_1,saveWord);
             screen.setAdapter(adapter);
             screen.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -309,6 +323,7 @@ public class MainActivity extends AppCompatActivity {
                     startActivity(i);
                 }
             });
+
             screen.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
                 @Override
                 public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
@@ -343,7 +358,6 @@ public class MainActivity extends AppCompatActivity {
     public static class Rec extends Fragment {
 
         ListView screen = null;
-        DBConnect dbConnect;
         ArrayAdapter<String> adapter;
 
         public Rec(){}
