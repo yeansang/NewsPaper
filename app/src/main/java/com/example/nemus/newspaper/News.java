@@ -1,6 +1,7 @@
 package com.example.nemus.newspaper;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -52,8 +53,7 @@ public class News extends Fragment {
         final DBConnect dbConnect = new DBConnect(getActivity(), "news.db",null,1);
         screen = (ListView) rootView.findViewById(R.id.news_listView);
         ArrayList<String> saveWord = new ArrayList<String>();
-
-        Log.d("tag", "onCreateView: test");
+        Log.d("tag", "news create");
 
         JSONArray newsArray =null;
         try {
@@ -83,10 +83,10 @@ public class News extends Fragment {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Toast toast = null;
                 try {
-                    //Intent i = new Intent(Intent.ACTION_VIEW);
-                    //Uri u = Uri.parse(urlCatch.getJSONObject(position).getString("webUrl"));
-                    //i.setData(u);
-                    //startActivity(i);
+                    Intent i = new Intent(Intent.ACTION_VIEW);
+                    Uri u = Uri.parse(urlCatch.getJSONObject(position).getString("webUrl"));
+                    i.setData(u);
+                    startActivity(i);
                     toast = Toast.makeText(getActivity(),urlCatch.getJSONObject(position).getString("webUrl"), Toast.LENGTH_LONG);
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -94,7 +94,9 @@ public class News extends Fragment {
                 toast.setGravity(Gravity.CENTER, 0, 0);
                 toast.show();
                 int lastNum = dbConnect.getLastPos(DBConnect.rec);
+
                 try {
+                    dbConnect.removeOld(DBConnect.rec,urlCatch.getJSONObject(position).getString("webTitle"));
                     dbConnect.input(DBConnect.rec, urlCatch.getJSONObject(position).getString("webTitle"),urlCatch.getJSONObject(position).getString("webUrl"),lastNum+1);
                 }catch (JSONException e){
                     e.printStackTrace();

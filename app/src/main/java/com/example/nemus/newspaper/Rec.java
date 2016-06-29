@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.PopupMenu;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -41,6 +42,7 @@ public class Rec extends Fragment {
         screen = (ListView) rootView.findViewById(R.id.rec_listView);
         ArrayList<String> saveWord = new ArrayList<String>();
         final JSONArray ja = dbConnect.getAll(DBConnect.rec);
+        Log.d("tag", "rec create");
 
         try{
             for (int i = 0; i < ja.length(); i++) {

@@ -83,6 +83,17 @@ public class DBConnect extends SQLiteOpenHelper{
         return true;
     }
 
+    public boolean removeOld(String table, String webTitle){
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM "+table+" WHERE webTitle LIKE \""+webTitle+"\"",null);
+        if(!cursor.moveToNext()){
+            return false;
+        }else{
+            db.execSQL("DELETE FROM "+table+" WHERE webTitle LIKE \""+webTitle+"\";");
+            return true;
+        }
+    }
+
     public boolean removeAll(String table){
         SQLiteDatabase db = getWritableDatabase();
         db.execSQL("DELETE FROM "+table+";");
