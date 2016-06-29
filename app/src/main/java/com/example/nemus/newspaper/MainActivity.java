@@ -1,9 +1,12 @@
 package com.example.nemus.newspaper;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.Toolbar;
    
 import android.support.v4.app.Fragment;
@@ -48,6 +51,8 @@ public class MainActivity extends AppCompatActivity {
      */
     private ViewPager mViewPager;
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,6 +70,8 @@ public class MainActivity extends AppCompatActivity {
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
+
+
 
         /*
       FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -150,45 +157,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        private static final String ARG_SECTION_NUMBER = "section_number";
-
-        /**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         */
-        public static PlaceholderFragment newInstance(int sectionNumber) {
-            PlaceholderFragment fragment = new PlaceholderFragment();
-            Bundle args = new Bundle();
-            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-            fragment.setArguments(args);
-            return fragment;
-        }
-
-        public PlaceholderFragment() {
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-            textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
-            return rootView;
-        }
-
-    }
     public static class News extends Fragment {
 
         ListView screen = null;
-        DBConnect dbConnect;
+
         ArrayAdapter<String> adapter;
         //GetGuardianNews gd = new GetGuardianNews();
 
@@ -197,9 +169,6 @@ public class MainActivity extends AppCompatActivity {
 
         public static News newInstance() {
             News fragment = new News();
-            //Bundle args = new Bundle();
-            // args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-            //fragment.setArguments(args);
             return fragment;
         }
 
@@ -207,6 +176,7 @@ public class MainActivity extends AppCompatActivity {
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_news, container, false);
+            final DBConnect dbConnect = new DBConnect(getActivity(), "news.db",null,1);
             screen = (ListView) rootView.findViewById(R.id.news_listView);
             ArrayList<String> saveWord = new ArrayList<String>();
 
@@ -238,13 +208,50 @@ public class MainActivity extends AppCompatActivity {
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     Toast toast = null;
                     try {
+                        Intent i = new Intent(Intent.ACTION_VIEW);
+                        Uri u = Uri.parse(urlCatch.getJSONObject(position).getString("webUrl"));
+                        i.setData(u);
+                        startActivity(i);
                         toast = Toast.makeText(getActivity(),urlCatch.getJSONObject(position).getString("webUrl"), Toast.LENGTH_LONG);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
                     toast.setGravity(Gravity.CENTER, 0, 0);
                     toast.show();
+                    int lastNum = dbConnect.getLastPos(DBConnect.rec);
+                    try {
+                        dbConnect.input(DBConnect.rec, urlCatch.getJSONObject(position).getString("webTitle"),urlCatch.getJSONObject(position).getString("webUrl"),lastNum+1);
+                    }catch (JSONException e){
+                        e.printStackTrace();
+                    }
 
+                }
+            });
+
+            screen.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+                @Override
+                public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                    PopupMenu pop = new PopupMenu(parent.getContext(), view);
+                    pop.getMenuInflater().inflate(R.menu.fav_menu_pop,pop.getMenu());
+
+                    final int index = position;
+                    //팝업메뉴 리스너 설정
+                    pop.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                        @Override
+                        public boolean onMenuItemClick(MenuItem item) {
+                            if(item.getItemId() == R.id.favorite){
+                                int lastNum = dbConnect.getLastPos(DBConnect.fav);
+                                try {
+                                    dbConnect.input(DBConnect.fav, urlCatch.getJSONObject(index).getString("webTitle"), urlCatch.getJSONObject(index).getString("webUrl"), lastNum + 1);
+                                }catch (JSONException e){
+                                    e.printStackTrace();
+                                }
+                            }
+                            return false;
+                        }
+                    });
+                    pop.show();
+                    return false;
                 }
             });
 
@@ -255,7 +262,7 @@ public class MainActivity extends AppCompatActivity {
     public static class Fav extends Fragment {
 
         ListView screen = null;
-        //DBConnect dbConnect;
+        DBConnect dbConnect;
         ArrayAdapter<String> adapter;
 
         public Fav(){}
@@ -266,22 +273,66 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+        public View onCreateView(final LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_fav, container, false);
+            final DBConnect dbConnect = new DBConnect(getActivity(), "news.db",null,1);
             screen = (ListView) rootView.findViewById(R.id.fav_listView);
             ArrayList<String> saveWord = new ArrayList<String>();
-            saveWord.add("testtext");
-            saveWord.add("testtext");
-            saveWord.add("testtext");
-            saveWord.add("testtext");
-            saveWord.add("testtext");
-            saveWord.add("testtext");
-            saveWord.add("testtext");
-            saveWord.add("testtext");
-            saveWord.add("testtext");
+            final JSONArray ja = dbConnect.getAll(DBConnect.fav);
+
+            try{
+                for (int i = 0; i < ja.length(); i++) {
+                    try {
+                        saveWord.add(ja.getJSONObject(i).getString("webTitle"));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    if (i > 10) break;
+                }
+            }catch(NullPointerException e){
+                saveWord.add("No favorite article");
+            }
             adapter= new ArrayAdapter<String>(getActivity(), android.R.layout.simple_expandable_list_item_1,saveWord);
             screen.setAdapter(adapter);
+            screen.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    Intent i = new Intent(Intent.ACTION_VIEW);
+                    Uri u = null;
+                    try {
+                        u = Uri.parse(ja.getJSONObject(position).getString("webUrl"));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    i.setData(u);
+                    startActivity(i);
+                }
+            });
+            screen.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+                @Override
+                public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                    PopupMenu pop = new PopupMenu(parent.getContext(), view);
+                    pop.getMenuInflater().inflate(R.menu.del_menu_pop,pop.getMenu());
+
+                    final int index = position;
+                    //팝업메뉴 리스너 설정
+                    pop.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                        @Override
+                        public boolean onMenuItemClick(MenuItem item) {
+                            if(item.getItemId() == R.id.delete){
+                                String juda = adapter.getItem(index);
+                                adapter.remove(juda);
+                                dbConnect.remove(DBConnect.fav,index);
+                                adapter.notifyDataSetChanged();
+                            }
+                            return false;
+                        }
+                    });
+                    pop.show();
+                    return false;
+                }
+            });
             return rootView;
         }
 
@@ -292,7 +343,7 @@ public class MainActivity extends AppCompatActivity {
     public static class Rec extends Fragment {
 
         ListView screen = null;
-        //DBConnect dbConnect;
+        DBConnect dbConnect;
         ArrayAdapter<String> adapter;
 
         public Rec(){}
@@ -303,22 +354,66 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+        public View onCreateView(final LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_rec, container, false);
+            final DBConnect dbConnect = new DBConnect(getActivity(), "news.db",null,1);
             screen = (ListView) rootView.findViewById(R.id.rec_listView);
             ArrayList<String> saveWord = new ArrayList<String>();
-            saveWord.add("testtext");
-            saveWord.add("testtext");
-            saveWord.add("testtext");
-            saveWord.add("testtext");
-            saveWord.add("testtext");
-            saveWord.add("testtext");
-            saveWord.add("testtext");
-            saveWord.add("testtext");
-            saveWord.add("testtext");
+            final JSONArray ja = dbConnect.getAll(DBConnect.rec);
+
+            try{
+                for (int i = 0; i < ja.length(); i++) {
+                    try {
+                        saveWord.add(ja.getJSONObject(i).getString("webTitle"));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    if (i > 10) break;
+                }
+            }catch(NullPointerException e){
+                saveWord.add("No recent article");
+            }
             adapter= new ArrayAdapter<String>(getActivity(), android.R.layout.simple_expandable_list_item_1,saveWord);
             screen.setAdapter(adapter);
+            screen.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    Intent i = new Intent(Intent.ACTION_VIEW);
+                    Uri u = null;
+                    try {
+                        u = Uri.parse(ja.getJSONObject(position).getString("webUrl"));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    i.setData(u);
+                    startActivity(i);
+                }
+            });
+            screen.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+                @Override
+                public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                    PopupMenu pop = new PopupMenu(parent.getContext(), view);
+                    pop.getMenuInflater().inflate(R.menu.del_menu_pop,pop.getMenu());
+
+                    final int index = position;
+                    //팝업메뉴 리스너 설정
+                    pop.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                        @Override
+                        public boolean onMenuItemClick(MenuItem item) {
+                            if(item.getItemId() == R.id.delete){
+                                String juda = adapter.getItem(index);
+                                adapter.remove(juda);
+                                dbConnect.remove(DBConnect.rec,index);
+                                adapter.notifyDataSetChanged();
+                            }
+                            return false;
+                        }
+                    });
+                    pop.show();
+                    return false;
+                }
+            });
             return rootView;
         }
     }

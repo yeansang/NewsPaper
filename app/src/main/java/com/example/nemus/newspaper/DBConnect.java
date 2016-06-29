@@ -5,10 +5,18 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Vector;
 
 public class DBConnect extends SQLiteOpenHelper{
+
+    final static String fav = "FAV";
+    final static String rec = "REC";
+
     public DBConnect(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
         super(context, name, factory, version);
     }
@@ -27,52 +35,67 @@ public class DBConnect extends SQLiteOpenHelper{
 
     }
 
-    public boolean input(String in, int pos){
+    public boolean input(String table, String title,String url, int pos){
         SQLiteDatabase db = getWritableDatabase();
-        db.execSQL("INSERT INTO CHAT (word, pos) VALUES (\""+in+"\", "+pos+");");
+        db.execSQL("INSERT INTO "+table+" (webTitle, webUrl, pos) VALUES (\""+title+"\",\""+url+"\","+pos+");");
         db.close();
         return true;
     }
 
-    public boolean inputAll(ArrayList<String> in){
+    public boolean inputAll(String table, JSONArray js){
         SQLiteDatabase db = getWritableDatabase();
-        for(int i=0;i<in.size();i++) {
-            db.execSQL("INSERT INTO CHAT (word, pos) VALUES (\""+in.get(i)+"\","+i+");");
+        for(int i=0;i<js.length();i++) {
+            try {
+                db.execSQL("INSERT INTO " + table + " (webTitle, webUrl, pos) VALUES (\"" + js.getJSONObject(i).getString("webTitle") + "\" ,\""+js.getJSONObject(i).getString("webUrl")+"\" ," + i + ");");
+            }catch (Exception e){
+                e.printStackTrace();
+            }
         }
         db.close();
         return true;
     }
 
-    public Vector<String> getAll(){
+    public JSONArray getAll(String table){
         SQLiteDatabase db = getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT * FROM CHAT",null);
-        Vector<String> out = new Vector<String>();
+        Cursor cursor = db.rawQuery("SELECT * FROM "+table,null);
+        JSONArray out = new JSONArray();
 
         if(cursor.isAfterLast()){
             return null;
         }
-
         while(cursor.moveToNext()){
-            String str = cursor.getString(1);
-            out.add(str);
+            try {
+                JSONObject jo = new JSONObject("{\"webTitle\":\""+cursor.getString(1)+"\",\"webUrl\":\""+cursor.getString(2)+"\",\"pos\":"+cursor.getString(3)+"}");
+                out.put(jo);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
         cursor.close();
         return out;
     }
 
-    public boolean remove(int pos){
+    public boolean remove(String table, int pos){
         SQLiteDatabase db = getWritableDatabase();
-        db.execSQL("DELETE FROM CHAT WHERE pos like "+pos+";");
-        db.execSQL("UPDATE CHAT SET pos=pos-1 WHERE pos>"+pos+";");
+        db.execSQL("DELETE FROM "+table+" WHERE pos like "+pos+";");
+        db.execSQL("UPDATE "+table+" SET pos=pos-1 WHERE pos>"+pos+";");
         db.close();
         return true;
     }
 
-    public boolean removeAll(){
+    public boolean removeAll(String table){
         SQLiteDatabase db = getWritableDatabase();
-        db.execSQL("DELETE FROM CHAT;");
+        db.execSQL("DELETE FROM "+table+";");
         db.close();
         return true;
+    }
+
+    public int getLastPos(String table){
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT MAX(pos) FROM "+table,null);
+        cursor.moveToNext();
+        if(cursor.isNull(0)) return -1;
+        return cursor.getInt(0);
     }
 
 }
