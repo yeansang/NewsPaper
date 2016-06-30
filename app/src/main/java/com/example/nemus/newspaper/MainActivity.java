@@ -29,9 +29,7 @@ public class MainActivity extends AppCompatActivity {
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
-
-
-
+    Fav fav;
 
 
     @Override
@@ -51,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
+        fav = new Fav();
 
         /*
       FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -107,9 +106,9 @@ public class MainActivity extends AppCompatActivity {
             // Return a PlaceholderFragment (defined as a static inner class below).
             switch (position){
                 case 0:
-                    return new News();
+                    return News.newInstance(fav);
                 case 1:
-                    return new Fav();
+                    return fav;
                 case 2:
                     return new Rec();
             }

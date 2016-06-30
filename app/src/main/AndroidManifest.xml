@@ -18,6 +18,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!--suppress AndroidDomInspection -->
+        <provider
+            android:authorities="com.example.nemus.newspaper.ConnectContentProvider"
+            android:name=".ConnectContentProvider" />
     </application>
 
     <uses-permission android:name="android.permission.INTERNET"/>

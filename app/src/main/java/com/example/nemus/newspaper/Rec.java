@@ -26,11 +26,13 @@ public class Rec extends Fragment {
 
     ListView screen = null;
     ArrayAdapter<String> adapter;
+    Fav fav;
 
     public Rec(){}
 
-    public static Rec newInstance(){
+    public static Rec newInstance(Fav fav){
         Rec fragment = new Rec();
+
         return fragment;
     }
 

@@ -1,6 +1,5 @@
 package com.example.nemus.newspaper;
 
-import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -37,11 +36,12 @@ public class News extends Fragment {
 
     ArrayAdapter<String> adapter;
     //GetGuardianNews gd = new GetGuardianNews();
+    static final String URI = "content://com.example.nemus.newspaper.ConnectContentProvider/news";
 
     public News() {
     }
 
-    public static News newInstance() {
+    public static News newInstance(Fav fav) {
         News fragment = new News();
         return fragment;
     }
@@ -120,6 +120,8 @@ public class News extends Fragment {
                             int lastNum = dbConnect.getLastPos(DBConnect.fav);
                             try {
                                 dbConnect.input(DBConnect.fav, urlCatch.getJSONObject(index).getString("webTitle"), urlCatch.getJSONObject(index).getString("webUrl"), lastNum + 1);
+                                Log.d("call", "resolver");
+                                getActivity().getContentResolver().notifyChange(Uri.parse(URI),null);
                             }catch (JSONException e){
                                 e.printStackTrace();
                             }

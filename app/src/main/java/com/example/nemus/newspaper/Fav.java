@@ -1,8 +1,13 @@
 package com.example.nemus.newspaper;
 
+import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
+import android.database.ContentObserver;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.PopupMenu;
 import android.util.Log;
@@ -26,6 +31,17 @@ public class Fav extends Fragment {
 
     ListView screen = null;
     static ArrayAdapter<String> adapter;
+    static final String URI = "content://com.example.nemus.newspaper.ConnectContentProvider/news";
+
+
+    private ContentObserver observer = new ContentObserver(new Handler()) {
+        @Override
+        public void onChange(boolean selfChange, Uri uri) {
+            super.onChange(selfChange, uri);
+            refresh();
+            Log.d("change","ooo");
+        }
+    };
 
     public Fav(){}
 
@@ -33,14 +49,26 @@ public class Fav extends Fragment {
         Fav fragment = new Fav();
         return fragment;
     }
-    /*
-    public static void refrash(Activity a){
-        DBConnect dbConnect = new DBConnect(a, "news.db",null,1);
+
+    public void refresh(){
+        DBConnect dbConnect = new DBConnect(getActivity(), "news.db",null,1);
         JSONArray ja = dbConnect.getAll(DBConnect.fav);
-        adapter.add();
-        adapter.notifyDataSetChanged();
+        adapter.clear();
+        ArrayList<String> saveWord = new ArrayList<String>();
+        try{
+            for (int i = 0; i < ja.length(); i++) {
+                try {
+                    saveWord.add(ja.getJSONObject(i).getString("webTitle"));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }catch(NullPointerException e){
+            saveWord.add("No favorite article");
+        }
+        adapter.addAll(saveWord);
     }
-    */
+
     @Override
     public View onCreateView(final LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -50,7 +78,9 @@ public class Fav extends Fragment {
         ArrayList<String> saveWord = new ArrayList<String>();
         final JSONArray ja = dbConnect.getAll(DBConnect.fav);
 
+        getActivity().getContentResolver().registerContentObserver(Uri.parse(URI), true, observer);
         Log.d("tag", "fav create");
+        ContentResolver cr = getActivity().getContentResolver();
 
         try{
             for (int i = 0; i < ja.length(); i++) {
@@ -59,13 +89,13 @@ public class Fav extends Fragment {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-
             }
         }catch(NullPointerException e){
             saveWord.add("No favorite article");
         }
 
         adapter= new ArrayAdapter<String>(getActivity(), android.R.layout.simple_expandable_list_item_1,saveWord);
+
         screen.setAdapter(adapter);
         screen.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -108,6 +138,11 @@ public class Fav extends Fragment {
             }
         });
         return rootView;
+    }
+
+    @Override
+    public void onDestroy(){
+        getActivity().getContentResolver().unregisterContentObserver(observer);
     }
 
 }
