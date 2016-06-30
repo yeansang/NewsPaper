@@ -1,10 +1,8 @@
 package com.example.nemus.newspaper;
 
 import android.content.ContentResolver;
-import android.content.Context;
 import android.content.Intent;
 import android.database.ContentObserver;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -67,6 +65,7 @@ public class Fav extends Fragment {
             saveWord.add("No favorite article");
         }
         adapter.addAll(saveWord);
+        dbConnect.close();
     }
 
     @Override
@@ -90,11 +89,13 @@ public class Fav extends Fragment {
                     e.printStackTrace();
                 }
             }
-        }catch(NullPointerException e){
+        }catch(NullPointerException e) {
             saveWord.add("No favorite article");
         }
 
         adapter= new ArrayAdapter<String>(getActivity(), android.R.layout.simple_expandable_list_item_1,saveWord);
+
+
 
         screen.setAdapter(adapter);
         screen.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -103,12 +104,12 @@ public class Fav extends Fragment {
                 Intent i = new Intent(Intent.ACTION_VIEW);
                 Uri u = null;
                 try {
-                    u = Uri.parse(ja.getJSONObject(position).getString("webUrl"));
+                    u = Uri.parse(ja.getJSONObject(Math.abs(position-dbConnect.getLastPos(DBConnect.fav))).getString("webUrl"));
+                    i.setData(u);
+                    startActivity(i);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                i.setData(u);
-                startActivity(i);
             }
         });
 
@@ -137,12 +138,13 @@ public class Fav extends Fragment {
                 return false;
             }
         });
+
         return rootView;
     }
-
+/*
     @Override
     public void onDestroy(){
         getActivity().getContentResolver().unregisterContentObserver(observer);
     }
-
+*/
 }

@@ -72,6 +72,7 @@ public class DBConnect extends SQLiteOpenHelper{
             }
         }
         cursor.close();
+        db.close();
         return out;
     }
 
@@ -106,6 +107,7 @@ public class DBConnect extends SQLiteOpenHelper{
         Cursor cursor = db.rawQuery("SELECT MAX(pos) FROM "+table,null);
         cursor.moveToNext();
         if(cursor.isNull(0)) return -1;
+        db.close();
         return cursor.getInt(0);
     }
 

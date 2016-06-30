@@ -22,14 +22,7 @@ import org.json.JSONException;
 import java.util.ArrayList;
 
 
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link News.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link News#newInstance} factory method to
- * create an instance of this fragment.
- */
+
 public class News extends Fragment {
 
     ListView screen = null;
@@ -120,13 +113,14 @@ public class News extends Fragment {
                             int lastNum = dbConnect.getLastPos(DBConnect.fav);
                             try {
                                 dbConnect.input(DBConnect.fav, urlCatch.getJSONObject(index).getString("webTitle"), urlCatch.getJSONObject(index).getString("webUrl"), lastNum + 1);
-                                Log.d("call", "resolver");
+                                Log.d("call", lastNum+"");
+                                Log.d("call",urlCatch.getJSONObject(index).getString("webUrl"));
                                 getActivity().getContentResolver().notifyChange(Uri.parse(URI),null);
+                                dbConnect.removeOld(DBConnect.fav,urlCatch.getJSONObject(index).getString("webTitle"));
+                                dbConnect.input(DBConnect.fav, urlCatch.getJSONObject(index).getString("webTitle"),urlCatch.getJSONObject(index).getString("webUrl"),lastNum+1);
                             }catch (JSONException e){
                                 e.printStackTrace();
                             }
-                            //fav.onDetach();
-
                         }
                         return false;
                     }
@@ -135,7 +129,10 @@ public class News extends Fragment {
                 return false;
             }
         });
+        dbConnect.close();
 
         return rootView;
     }
+
+
 }

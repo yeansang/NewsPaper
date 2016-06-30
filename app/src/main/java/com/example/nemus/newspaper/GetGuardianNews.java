@@ -1,7 +1,6 @@
 package com.example.nemus.newspaper;
 
 import android.os.AsyncTask;
-import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -14,9 +13,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-/**
- * Created by nemus on 2016-06-28.
- */
+
 public class GetGuardianNews extends AsyncTask<Void, Void, JSONArray> {
 
     final String apiKey = "&api-key=7ef3d39f-2a09-483a-876d-6d9f39720195";

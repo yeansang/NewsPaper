@@ -32,7 +32,6 @@ public class ConnectContentProvider extends ContentProvider{
 
         queryBuilder.setTables("FAV");
 
-
         Cursor c = queryBuilder.query(dbConnect.getWritableDatabase(), projection, selection, selectionArgs, null, null, sortOrder);
         Log.d("query", queryBuilder.toString());
         c.setNotificationUri(getContext().getContentResolver(), uri);
